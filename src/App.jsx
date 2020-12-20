@@ -38,7 +38,7 @@ const useStyles = makeStyles({
   },
   recordButtons: {
     position: 'absolute',
-    bottom: 8,
+    bottom: 24,
     width: '100%',
     textAlign: 'center'
   },

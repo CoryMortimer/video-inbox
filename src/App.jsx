@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import CircularProgress from '@material-ui/core/CircularProgress';
+import { makeStyles } from '@material-ui/core/styles';
 import { RecordRTCPromisesHandler } from 'recordrtc'
 import ReactPlayer from 'react-player/file'
 import 'firebase/storage'
@@ -8,11 +10,61 @@ import DeleteButton from './DeleteButton'
 import SendButton from './SendButton'
 import useStopWatch from './useStopWatch'
 import { useStorage } from 'reactfire';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { isMobile } from "react-device-detect";
+
+const useStyles = makeStyles({
+  videoContainer: {
+    position: 'relative',
+    height: '100vh',
+    maxWidth: '100vw',
+  },
+  uploadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    background: 'rgba(255, 255, 255, .6)',
+  },
+  uploadingSpinner: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform:' translate(-50%, -50%)'
+  },
+  mirrorVideo: {
+    transform: 'scaleX(-1)'
+  },
+  recordButtons: {
+    position: 'absolute',
+    bottom: 8,
+    width: '100%',
+    textAlign: 'center'
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 8,
+    left: 8
+  },
+  sendButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8
+  }
+})
 
 const RECORD_SECONDS = parseInt(process.env.REACT_APP_RECORD_SECONDS, 10) || 30
 
 const App = () => {
+  const {
+    videoContainer,
+    uploadingContainer,
+    uploadingSpinner,
+    mirrorVideo,
+    recordButtons,
+    deleteButton,
+    sendButton
+  } = useStyles()
   const storage = useStorage()
   const { running, time, start, stop, clear } = useStopWatch()
   const [stream, setStream] = useState(null)
@@ -83,10 +135,12 @@ const App = () => {
     })
   }
 
+  const videoStyles = { width: '100%', height: '100%', ...(isMobile && {objectFit: 'cover'}) }
+
   if (mediaUrl) {
     return (
       <>
-        <div style={{position: 'relative', height: '100vh', maxWidth: '100vw'}}>
+        <div className={videoContainer}>
           <ReactPlayer
             key="playback"
             playing
@@ -94,25 +148,17 @@ const App = () => {
             url={mediaUrl}
             height="100%"
             width="100%"
+            config={{file: { attributes: {style: videoStyles}}}}
           />
-          <div style={{position: 'absolute', top: 8, left: 8 }}>
+          <div className={deleteButton}>
             <DeleteButton onClick={clearMedia} />
           </div>
-          <div style={{position: 'absolute', top: 8, right: 8 }}>
+          <div className={sendButton}>
             <SendButton onClick={upload} />
           </div>
           {isUploading && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'rgba(255, 255, 255, .6)',
-              }}
-            >
-              <div style={{position: 'absolute', top: '50%', left: '50%', transform:' translate(-50%, -50%)'}}>
+            <div className={uploadingContainer}>
+              <div className={uploadingSpinner}>
                 <CircularProgress
                   size="5rem"
                   variant={uploadProgress ? 'determinate' : undefined}
@@ -127,9 +173,9 @@ const App = () => {
   } else {
     return (
       <>
-        <div style={{position: 'relative', height: '100vh', maxWidth: '100vw'}}>
+        <div className={videoContainer}>
           <ReactPlayer
-            style={{transform: 'scaleX(-1)'}}
+            className={mirrorVideo}
             key="live"
             playing
             url={stream}
@@ -137,8 +183,9 @@ const App = () => {
             width="100%"
             muted
             volume={0}
+            config={{file: { attributes: {style: videoStyles}}}}
           />
-          <div style={{position: 'absolute', bottom: 8, width: '100%', textAlign: 'center'}}>
+          <div className={recordButtons}>
             {running ?
               <StopButton onClick={stopRecordingAndSetMedia} progress={(100 / RECORD_SECONDS) * time} /> :
               <RecordButton onClick={startRecording} />

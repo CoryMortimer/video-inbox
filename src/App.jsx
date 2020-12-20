@@ -11,6 +11,7 @@ import SendButton from './SendButton'
 import useStopWatch from './useStopWatch'
 import { useStorage } from 'reactfire';
 import { isMobile } from "react-device-detect";
+import Snackbar from '@material-ui/core/Snackbar';
 
 const useStyles = makeStyles({
   videoContainer: {
@@ -72,6 +73,7 @@ const App = () => {
   const [mediaUrl, setMediaUrl] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [notifySent, setNotifySent] = useState(false)
 
   useEffect(() => {
     const getMedia = async () => {
@@ -132,6 +134,8 @@ const App = () => {
       console.log('success')
       setUploadProgress(0)
       setIsUploading(false)
+      clearMedia()
+      setNotifySent(true)
     })
   }
 
@@ -192,6 +196,12 @@ const App = () => {
             }
           </div>
         </div>
+        <Snackbar
+          open={notifySent}
+          autoHideDuration={6000}
+          onClose={() => setNotifySent(false)}
+          message="Video sent. Thank you!"
+        />
       </>
     )
   }

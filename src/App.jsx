@@ -1,19 +1,25 @@
 import { useState, useEffect, useCallback } from 'react'
 import { RecordRTCPromisesHandler } from 'recordrtc'
 import ReactPlayer from 'react-player/file'
+import 'firebase/storage'
 import RecordButton from './RecordButton'
 import StopButton from './StopButton'
 import DeleteButton from './DeleteButton'
 import SendButton from './SendButton'
 import useStopWatch from './useStopWatch'
+import { useStorage } from 'reactfire';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
-const RECORD_SECONDS = 5
+const RECORD_SECONDS = parseInt(process.env.REACT_APP_RECORD_SECONDS, 10) || 30
 
 const App = () => {
+  const storage = useStorage()
   const { running, time, start, stop, clear } = useStopWatch()
   const [stream, setStream] = useState(null)
   const [recorder, setRecorder] = useState(null)
   const [mediaUrl, setMediaUrl] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   useEffect(() => {
     const getMedia = async () => {
@@ -56,6 +62,27 @@ const App = () => {
     setMediaUrl(null)
   }
 
+  const upload = async () => {
+    setIsUploading(true)
+    const today = new Date()
+    const ref = storage.ref(`${today.getTime()}.webm`)
+    const blob = await recorder.getBlob()
+    const uploadTask = ref.put(blob, { contentType: 'video/webm' })
+    uploadTask.on('stateChanged', (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      console.log('Upload is ' + progress + '% done');
+      setUploadProgress(progress)
+    }, (error) => {
+      console.log('error', error)
+      setUploadProgress(0)
+      setIsUploading(false)
+    }, () => {
+      console.log('success')
+      setUploadProgress(0)
+      setIsUploading(false)
+    })
+  }
+
   if (mediaUrl) {
     return (
       <>
@@ -63,7 +90,7 @@ const App = () => {
           <ReactPlayer
             key="playback"
             playing
-            controls
+            loop
             url={mediaUrl}
             height="100%"
             width="100%"
@@ -72,8 +99,28 @@ const App = () => {
             <DeleteButton onClick={clearMedia} />
           </div>
           <div style={{position: 'absolute', top: 8, right: 8 }}>
-            <SendButton onClick={() => {}} />
+            <SendButton onClick={upload} />
           </div>
+          {isUploading && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(255, 255, 255, .6)',
+              }}
+            >
+              <div style={{position: 'absolute', top: '50%', left: '50%', transform:' translate(-50%, -50%)'}}>
+                <CircularProgress
+                  size="5rem"
+                  variant={uploadProgress ? 'determinate' : undefined}
+                  value={uploadProgress ? uploadProgress : undefined}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </>
     )

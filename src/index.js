@@ -3,11 +3,16 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import { FirebaseAppProvider } from 'reactfire';
+
+const firebaseConfig = JSON.parse(process.env.REACT_APP_FIREBASE_CONFIG);
 
 ReactDOM.render(
   <React.StrictMode>
     <CssBaseline>
-      <App />
+      <FirebaseAppProvider firebaseConfig={firebaseConfig}>
+        <App />
+      </FirebaseAppProvider>
     </CssBaseline>
   </React.StrictMode>,
   document.getElementById('root')

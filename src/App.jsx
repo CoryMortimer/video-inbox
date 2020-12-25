@@ -139,7 +139,7 @@ const App = () => {
     })
   }
 
-  const videoStyles = { width: '100%', height: '100%', ...(isMobile && {objectFit: 'cover'}) }
+  const videoStyles = { width: '100%', height: '100%', ...(isMobile && {objectFit: 'fill'}) }
 
   if (mediaUrl) {
     return (
